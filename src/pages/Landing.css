@@ -1,0 +1,460 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#04040a;--bg2:#0a0a12;--neon:#00FF9C;
+  --text:rgba(240,240,238,.93);
+  /* .38 composited against --bg worked out to ~3.2:1 contrast — under the
+     4.5:1 WCAG AA minimum for normal text, and this variable covers most
+     of the page's secondary text (labels, captions, descriptions), a lot
+     of it under 14px where there's no "large text" exception. .52 lands
+     around 5.1:1. */
+  --dim:rgba(240,240,238,.52);
+  /* the hero's dashboard mock is a fake screenshot — its micro-labels
+     (6-8px table headers, sidebar labels) are meant to read as quiet
+     background chrome, not real content, so they don't need to clear
+     AA contrast the way --dim's other uses (real subtext, captions,
+     descriptions) do. Kept at --dim's old value rather than inheriting
+     the bump, or the mock starts looking more "lit up"/legible than a
+     screenshot backdrop should. */
+  --mock-dim:rgba(240,240,238,.38);
+  --muted:rgba(240,240,238,.14);
+  --border:rgba(255,255,255,.055);
+}
+html{background:var(--bg);overflow-x:clip}
+body{background:var(--bg);color:var(--text);
+  font-family:'Inter',-apple-system,sans-serif;
+  -webkit-font-smoothing:antialiased;overflow-x:clip}
+
+/* the page itself never scrolls — .lp-snap-scroll below is the one and only
+   scrolling element, so fixed children (nav, backdrop, progress bar) never
+   need to fight document scroll to stay put */
+.lp-root{position:relative;height:100vh;overflow:hidden}
+
+.lp-snap-scroll{
+  height:100vh;overflow-y:scroll;overflow-x:hidden;
+  /* proximity, not mandatory — the features section is a scroll-scrubbed
+     block several viewports tall (see FeaturesOrbit), and "mandatory"
+     forces the browser to yank scroll position back to a snap point
+     any time it rests away from one, which fights scrolling through
+     that section's middle. Proximity still gives the other, normal
+     one-viewport sections a snap feel without that fight. */
+  scroll-snap-type:y proximity;scroll-behavior:smooth;
+  -webkit-overflow-scrolling:touch;
+}
+.lp-snap-scroll > section{scroll-snap-align:start;scroll-snap-stop:always;min-height:100vh}
+/* footer isn't its own "slide" — it just trails the last one, reachable by
+   scrolling past the final snap point rather than being a forced full-screen stop */
+
+/* ── FIXED BACKDROP — pinned to the viewport for the entire page. Every
+   section's own background stays transparent, so this shows through
+   everywhere and content visually scrolls up and over it, rather than each
+   section carrying (and losing, once scrolled past) its own decoration. ── */
+.lp-backdrop{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+/* Genuinely static — no keyframe drift. The backdrop is pinned via
+   position:fixed already; if the blobs themselves keep animating it still
+   reads as "the background is moving," which defeats the point. All motion
+   on this page now belongs to content that scrolls, not to the backdrop. */
+.bg-blob{position:absolute;border-radius:50%;filter:blur(90px);pointer-events:none}
+/* green + blue are the page's real palette (they also anchor the hero and
+   the heatmap accent); the other three used to be full-saturation purple/
+   pink/gold competing for the same attention — muted ~45% toward gray so
+   they read as warmth in the dark, not as three more brand colors. */
+.bg-blob-1{width:460px;height:460px;background:#00FF9C;opacity:.16;top:-12%;left:-8%}
+.bg-blob-2{width:380px;height:380px;background:#00D1FF;opacity:.13;top:55%;right:-10%}
+.bg-blob-3{width:300px;height:300px;background:#AD61D9;opacity:.09;top:20%;right:8%}
+.bg-blob-4{width:340px;height:340px;background:#D9809D;opacity:.07;bottom:-10%;left:12%}
+.bg-blob-5{width:260px;height:260px;background:#D9B24D;opacity:.06;bottom:8%;left:45%}
+.bg-grid{
+  position:absolute;inset:-2px;
+  background-image:radial-gradient(rgba(255,255,255,.05) 1px,transparent 1px);
+  background-size:34px 34px;
+  mask-image:radial-gradient(ellipse 80% 60% at 50% 40%,#000 40%,transparent 90%);
+}
+
+.scroll-progress-bar{
+  position:fixed;top:0;left:0;width:100%;height:2px;z-index:1000;
+  background:var(--neon);transform-origin:0 50%;transform:scaleX(0);
+  box-shadow:0 0 10px rgba(0,255,156,.65);
+}
+
+/* ── NAV ── */
+.lp-nav{
+  position:sticky;top:0;left:0;right:0;z-index:900;
+  padding:16px 52px;display:flex;align-items:center;justify-content:space-between;
+  background:rgba(4,4,10,.75);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
+  transition:background .3s ease,box-shadow .3s ease;
+}
+.lp-nav.scrolled{background:rgba(4,4,10,.92);box-shadow:0 8px 30px rgba(0,0,0,.35)}
+.nav-logo{display:flex;align-items:center;gap:9px}
+.nlm{width:28px;height:28px;background:var(--neon);border-radius:7px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.nlt{font-size:15px;font-weight:800;letter-spacing:-.5px}
+.nav-right{display:flex;gap:8px;align-items:center}
+.btn-g{background:transparent;border:1px solid var(--border);color:var(--text);
+  border-radius:8px;padding:8px 18px;font-size:12px;font-weight:600;
+  cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s}
+.btn-g:hover{border-color:rgba(255,255,255,.28);transform:translateY(-1px)}
+.btn-n{position:relative;overflow:hidden;background:var(--neon);color:#04040a;border:none;border-radius:8px;
+  padding:8px 20px;font-size:12px;font-weight:800;cursor:pointer;
+  font-family:'Inter',sans-serif;transition:all .2s}
+.btn-n:hover{background:#00e88c;box-shadow:0 0 28px rgba(0,255,156,.4);transform:translateY(-1px)}
+.btn-n::after{
+  content:'';position:absolute;top:0;left:-60%;width:40%;height:100%;
+  background:linear-gradient(120deg,transparent,rgba(255,255,255,.55),transparent);
+  transform:skewX(-20deg);transition:left .6s ease;
+}
+.btn-n:hover::after{left:130%}
+
+/* ── HERO — side by side on wide screens so the space either side of a
+   centered column doesn't go to waste; stacks back to centered on narrow
+   viewports (see responsive section) ── */
+.hero{
+  position:relative;overflow:hidden;
+  display:grid;grid-template-columns:0.95fr 1.15fr;gap:48px;align-items:center;
+  max-width:1440px;margin:0 auto;padding:70px 40px 90px;
+}
+.hero-copy-center{position:relative;z-index:1;text-align:left;max-width:none}
+.hero-copy-center .hero-sub{max-width:460px;margin-left:0;margin-right:0}
+.hero-copy-center .hero-actions{justify-content:flex-start}
+
+/* ambient drifting blobs */
+/* hero's own ambient blobs now live in the shared .lp-backdrop (bg-blob-*)
+   so they persist behind every section instead of scrolling away with hero */
+@keyframes blobFloat1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(50px,35px) scale(1.15)}}
+@keyframes blobFloat2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-35px,-25px) scale(1.12)}}
+@keyframes blobFloat3{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-25px,30px) scale(.9)}}
+.eyebrow{
+  font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--neon);
+  text-transform:uppercase;letter-spacing:.2em;display:inline-block;margin-bottom:18px;
+}
+.hero-title{
+  font-size:clamp(32px,4.2vw,52px);font-weight:900;line-height:1.08;letter-spacing:-.03em;
+  margin-bottom:20px;
+}
+.hero-title .neon{color:var(--neon);text-shadow:0 0 40px rgba(0,255,156,.45),0 0 90px rgba(0,255,156,.2)}
+.type-cursor{display:inline-block;color:var(--neon);font-weight:700;margin-left:2px;animation:blink 0.9s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+.hero-sub{font-size:16px;color:var(--dim);line-height:1.7;margin-bottom:32px;max-width:460px}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap}
+.btn-hero{background:var(--neon);color:#04040a;border:none;border-radius:12px;
+  padding:15px 30px;font-size:14px;font-weight:800;cursor:pointer;
+  font-family:'Inter',sans-serif;transition:background .25s,box-shadow .25s,transform .25s}
+.btn-hero:hover{background:#00e88c;box-shadow:0 16px 48px rgba(0,255,156,.3);transform:translateY(-2px)}
+
+/* a slow breathing glow on the final CTA's button — the one button on the
+   page where drawing the eye is the whole point, so it's the one place
+   this kind of ambient motion earns its keep instead of feeling busy. */
+.btn-hero-pulse{animation:btnPulse 2.6s ease-in-out infinite}
+.btn-hero-pulse:hover{animation-play-state:paused}
+@keyframes btnPulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(0,255,156,.45)}
+  50%{box-shadow:0 0 0 12px rgba(0,255,156,0)}
+}
+.btn-hero-ghost{background:transparent;color:var(--text);border:1px solid var(--border);
+  border-radius:12px;padding:15px 26px;font-size:14px;font-weight:700;cursor:pointer;
+  font-family:'Inter',sans-serif;transition:all .2s}
+.btn-hero-ghost:hover{border-color:rgba(255,255,255,.28);background:rgba(255,255,255,.04)}
+
+/* ── HERO VISUAL — a faithful, Mac-chrome replica of the real dashboard,
+   scaled down to a supporting visual rather than a full-bleed screenshot ── */
+.hero-visual-full{position:relative;z-index:1;width:100%;max-width:720px;perspective:1400px}
+
+/* soft glow blooming behind the dashboard mock */
+.visual-glow{
+  position:absolute;left:50%;bottom:-60px;transform:translateX(-50%);
+  width:90%;height:220px;border-radius:50%;
+  background:radial-gradient(ellipse 60% 100% at 50% 100%,rgba(0,255,156,.35) 0%,transparent 70%);
+  filter:blur(50px);opacity:1;transition:opacity 1.4s ease;pointer-events:none;z-index:0;
+}
+
+.mac-window{
+  position:relative;z-index:1;
+  background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;
+  box-shadow:0 40px 100px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.02);
+  transition:transform .25s ease-out;transform-style:preserve-3d;
+}
+.mac-titlebar{
+  display:flex;align-items:center;justify-content:center;position:relative;
+  padding:10px 16px;border-bottom:1px solid var(--border);background:rgba(255,255,255,.015);
+}
+.mac-dots{position:absolute;left:16px;display:flex;gap:8px}
+.mac-dots .dot{width:11px;height:11px;border-radius:50%;display:block}
+.mac-dots .dot.red{background:#ff5f57}
+.mac-dots .dot.yellow{background:#febc2e}
+.mac-dots .dot.green{background:#28c840}
+.mac-titlebar-title{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--mock-dim);letter-spacing:.03em}
+
+.dash{padding:14px 16px 18px;background:var(--bg)}
+
+.dash-header{display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid var(--border)}
+.dash-header-col{display:flex;flex-direction:column;gap:2px}
+.dash-header-col-right{align-items:flex-end}
+.dash-label{font-size:7px;font-weight:700;color:var(--mock-dim);text-transform:uppercase;letter-spacing:.14em}
+.dash-value{font-size:10px;font-weight:700;color:var(--text)}
+.dash-mono{font-family:'JetBrains Mono',monospace}
+.dash-brand{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;letter-spacing:-.02em}
+.dash-brand-icon{width:18px;height:18px;border-radius:5px;background:var(--neon);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+.dash-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:10px}
+.dash-stats>div{transition:transform .25s ease,box-shadow .25s ease}
+.dash-stats>div:hover{transform:translateY(-2px)}
+.dash-stats>div:nth-child(4){animation:statGlow 2.8s ease-in-out infinite}
+@keyframes statGlow{0%,100%{box-shadow:0 0 0 rgba(0,255,156,0)}50%{box-shadow:0 0 16px rgba(0,255,156,.22)}}
+.dash-stats .text-green-500{display:inline-block;animation:trendBounce 1.6s ease-in-out infinite}
+@keyframes trendBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+
+/* ── rotating cube — Check-ins / Analysis / Habits faces, à la Resend's
+   hero cube but showing real dashboard pieces instead of decorative sides ── */
+/* styled as a segmented control (bordered track + pill buttons) rather than
+   plain text, so it reads as clickable at a glance instead of as labels */
+.cube-tabbar{
+  display:inline-flex;gap:3px;padding:3px;margin-bottom:8px;
+  background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;
+}
+.cube-tab{
+  display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.03);border:1px solid var(--border);
+  border-radius:7px;padding:5px 10px;font-size:10px;font-weight:700;color:var(--mock-dim);
+  cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;
+}
+.cube-tab:hover{color:var(--text);background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16)}
+.cube-tab.active{color:#04040a;background:var(--neon);border-color:var(--neon);box-shadow:0 0 16px rgba(0,255,156,.35)}
+
+/* countdown sliver — shows how long until the cube auto-advances */
+.cube-progress{height:2px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;margin:0 0 8px}
+.cube-progress-fill{height:100%;background:var(--neon);width:0%;animation:cubeProgress 2s linear forwards}
+.cube-progress-fill.paused{animation-play-state:paused}
+@keyframes cubeProgress{from{width:0%}to{width:100%}}
+
+.dash-cube-scene{position:relative;height:230px;perspective:1600px}
+.dash-cube{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .4s cubic-bezier(.65,0,.35,1)}
+.dash-face{
+  position:absolute;inset:0;backface-visibility:hidden;padding:16px 18px;
+  display:flex;flex-direction:column;justify-content:center;background:var(--bg);
+}
+
+.dash-analysis-split{display:flex;gap:10px;align-items:flex-start;width:100%}
+.dash-heatmap-card{width:220px;flex-shrink:0}
+.dash-stability-card{flex:1;min-width:0}
+
+.dash-face-habits{display:flex;flex-direction:column;gap:14px}
+.dash-habits-col,.dash-goals-col{display:flex;flex-direction:column;gap:8px}
+.dash-habit-chip-row{display:flex;flex-wrap:wrap;gap:7px}
+.dash-habit-chip{
+  display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.03);border:1px solid var(--border);
+  border-radius:20px;padding:6px 12px 6px 8px;font-size:10px;font-weight:700;
+}
+.dash-goal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* sidebar/goal pieces reused across faces */
+.dash-sidebar-label{font-size:7px;font-weight:700;color:var(--mock-dim);text-transform:uppercase;letter-spacing:.12em}
+.dash-habit-icon{display:flex;align-items:center;justify-content:center;transform:scale(.7);flex-shrink:0}
+.dash-goal-card{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;padding:8px}
+.dash-goal-top{display:flex;align-items:center;gap:5px;margin-bottom:6px}
+.dash-goal-name{font-size:9px;font-weight:700}
+.dash-goal-meta{display:flex;justify-content:space-between;font-size:7px;color:var(--mock-dim);font-family:'JetBrains Mono',monospace;margin-bottom:4px}
+.dash-goal-bar{height:2px;background:var(--bg);border-radius:2px;overflow:hidden}
+.dash-goal-bar-fill{height:100%;border-radius:2px;transition:width 1.1s cubic-bezier(.16,1,.3,1)}
+
+/* center: habit check-in table */
+.dash-table-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:9px;overflow:hidden}
+.dash-table{width:100%;border-collapse:collapse}
+.dash-table thead th{font-size:7px;font-weight:700;color:var(--mock-dim);text-transform:uppercase;letter-spacing:.08em;text-align:center;padding:7px 4px;background:rgba(255,255,255,.02);border-bottom:1px solid var(--border)}
+.dash-table thead th.dash-th-left{text-align:left;padding-left:10px}
+.dash-table thead th.dash-th-right{text-align:right;padding-right:10px}
+.dash-th-icon{display:flex;align-items:center;justify-content:center;transform:scale(.7)}
+.dash-row{opacity:0;transform:translateY(6px);transition:opacity .5s ease,transform .5s ease}
+.dash-row.in{opacity:1;transform:translateY(0)}
+.dash-row.in.locked{opacity:.55}
+.dash-row td{padding:6px 4px;border-bottom:1px solid rgba(255,255,255,.03);text-align:center;vertical-align:middle}
+.dash-row:last-child td{border-bottom:none}
+.dash-date-cell{display:flex;flex-direction:column;gap:1px;padding-left:6px;text-align:left}
+.dash-date-cell span:first-child{font-size:9px;font-weight:700;display:flex;align-items:center;gap:3px}
+.dash-day{font-size:6px;font-weight:700;color:var(--mock-dim);text-transform:uppercase;letter-spacing:.1em}
+.dash-progress-cell{display:flex;flex-direction:column;gap:3px;align-items:flex-start;padding:0 4px}
+.dash-progress-cell span{font-size:7px;font-weight:700;color:var(--mock-dim);font-family:'JetBrains Mono',monospace}
+.dash-progress-bar{width:100%;height:2px;background:var(--bg);border-radius:2px;overflow:hidden}
+.dash-progress-fill{height:100%;background:var(--neon);border-radius:2px;transition:width 1.1s cubic-bezier(.16,1,.3,1)}
+.dash-check{width:17px;height:17px;border-radius:5px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;margin:0 auto;background:transparent;transition:all .2s}
+.dash-check svg{width:9px;height:9px}
+.dash-status{font-size:6px;font-weight:800;letter-spacing:.12em;padding-right:6px}
+.dash-status.peak{color:var(--neon)}
+.dash-status.stable{color:#00D1FF}
+.dash-status.idle{color:var(--mock-dim)}
+
+/* heatmap + stability analysis cards */
+.dash-analysis-card{background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:9px}
+.dash-analysis-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;font-size:8px;font-weight:700;color:var(--mock-dim);text-transform:uppercase;letter-spacing:.08em}
+.dash-analysis-head span{display:flex;align-items:center;gap:4px}
+.dash-analysis-badge{background:rgba(0,255,156,.1);color:var(--neon);border:1px solid rgba(0,255,156,.2);border-radius:4px;padding:2px 5px;font-size:6px}
+.dash-analysis-mini{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:9px}
+.dash-analysis-mini div{background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:6px}
+.dash-analysis-mini span{display:block;font-size:6px;font-weight:700;color:var(--mock-dim);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
+.dash-analysis-mini strong{font-size:10px;font-weight:800}
+.dash-analysis-sublabel{display:block;font-size:7px;font-weight:700;color:var(--mock-dim);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.dash-stability-list{display:flex;flex-direction:column;gap:7px}
+.dash-stability-row{display:flex;align-items:center;gap:5px}
+.dash-stability-bar-wrap{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.dash-stability-bar-wrap span{font-size:8px;font-weight:600;color:var(--mock-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dash-stability-bar{height:2px;background:var(--bg);border-radius:2px;overflow:hidden}
+.dash-stability-fill{height:100%;border-radius:2px;transition:width 1.1s cubic-bezier(.16,1,.3,1)}
+.dash-stability-pct{font-size:7px;font-weight:700;color:var(--mock-dim);font-family:'JetBrains Mono',monospace;flex-shrink:0}
+
+/* ── SECTION HEAD (shared) ── */
+.section-head{text-align:center;max-width:560px;margin:0 auto 48px}
+.section-head h2{font-size:clamp(24px,3vw,34px);font-weight:900;letter-spacing:-.02em;line-height:1.2}
+.section-head .eyebrow{margin-bottom:12px}
+
+/* FeaturesOrbit manages its own (intentionally tall) scroll track and pins
+   itself internally, so this wrapper just needs to get out of the way.
+   It's also opted out of the page's mandatory scroll-snap (see
+   .lp-snap-scroll > section above) — a snap target that's 3+ viewports
+   tall fights the "always land on a section" snap behavior and the
+   browser yanks the scroll position back to the top of the section on
+   every scroll tick, which is what made the animation feel stuck. */
+.lp-snap-scroll > section.features-section{scroll-snap-align:none;scroll-snap-stop:normal}
+.features-section{position:relative;padding:0}
+
+/* ── FEATURES ── */
+.features{max-width:1160px;margin:0 auto;padding:100px 52px}
+
+/* ── FINAL CTA — calendar progress ──
+   Opted out of scroll-snap for the same reason as features-section: it
+   sits right after that tall, freely-scrolling block, and a hard forced
+   "always land here" snap point right at that boundary made the handoff
+   between the two feel like a jolt rather than one continuous scroll.
+   The content is also centered within the min-height:100vh section (it
+   previously just top-aligned, leaving a dead gap of empty space below
+   the stats bar down to the footer). */
+.lp-snap-scroll > section.cal-cta{scroll-snap-align:none;scroll-snap-stop:normal}
+.cal-cta{
+  position:relative;padding:80px 32px 60px;max-width:1160px;margin:0 auto;
+  display:flex;flex-direction:column;justify-content:center;
+}
+.cal-cta-inner{
+  display:grid;grid-template-columns:1fr auto;gap:84px;align-items:center;
+  max-width:1100px;margin:0 auto 64px;
+}
+@keyframes calCopyIn{to{opacity:1;transform:translateY(0)}}
+/* capped just under the hero title's 52px max (clamp(32px,4.2vw,52px) in
+   .hero-title) — the hero is the page's visual anchor and should stay the
+   single biggest thing on it; this previously topped out at 58px, making
+   the closing section shout louder than the opening one. */
+.cal-copy h2{font-size:clamp(30px,4vw,50px);font-weight:900;letter-spacing:-.02em;line-height:1.12;margin-bottom:18px;overflow:hidden}
+.cal-copy h2 .neon{color:var(--neon);text-shadow:0 0 30px rgba(0,255,156,.35)}
+
+/* each word rises into place on its own beat (--i, set in Landing.tsx)
+   instead of the heading arriving as one static block. */
+.cal-word{display:inline-block;opacity:0;transform:translateY(100%)}
+.cal-cta.in-view .cal-word{animation:calWordIn .75s cubic-bezier(.16,1,.3,1) forwards;animation-delay:calc(var(--i) * 70ms)}
+@keyframes calWordIn{to{opacity:1;transform:translateY(0)}}
+
+.cal-copy-rest{opacity:0;transform:translateY(20px)}
+.cal-cta.in-view .cal-copy-rest{animation:calCopyIn .7s cubic-bezier(.16,1,.3,1) .5s forwards}
+.cal-copy p{font-size:16px;color:var(--dim);margin-bottom:28px;max-width:38ch;line-height:1.6}
+.cal-caption{display:block;font-size:13px;color:var(--dim);margin-top:14px}
+
+.cal-visual{
+  opacity:0;transform:translateY(20px) scale(.96);
+  padding-right:84px; /* room for the "Today" label bleeding past the grid */
+}
+.cal-cta.in-view .cal-visual{animation:calCopyIn .7s cubic-bezier(.16,1,.3,1) .15s forwards}
+
+.cal-stats-bar{
+  display:flex;align-items:center;justify-content:center;gap:28px;flex-wrap:nowrap;
+  width:fit-content;max-width:100%;margin:0 auto;padding:20px 36px;border-radius:18px;
+  background:rgba(255,255,255,.03);border:1px solid var(--border);
+  opacity:0;transform:translateY(16px);
+}
+.cal-cta.in-view .cal-stats-bar{animation:calCopyIn .6s cubic-bezier(.16,1,.3,1) .3s forwards}
+.cal-stat{display:flex;align-items:center;gap:10px;color:var(--neon);white-space:nowrap}
+.cal-stat strong{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:800;color:var(--text)}
+.cal-stat span{font-size:12px;color:var(--dim);text-transform:uppercase;letter-spacing:.05em;margin-left:-2px}
+.cal-stat-divider{width:1px;height:26px;background:var(--border);flex-shrink:0}
+
+@media (max-width:560px){
+  .cal-stats-bar{flex-wrap:wrap;gap:14px 22px}
+}
+
+@media (max-width:860px){
+  .cal-cta-inner{grid-template-columns:1fr;justify-items:center;text-align:center;gap:40px}
+  .cal-copy{text-align:center}
+  .cal-copy p{margin-left:auto;margin-right:auto}
+  .cal-visual{padding-right:0}
+}
+
+/* ── FOOTER ── */
+.lp-footer{
+  border-top:1px solid var(--border);padding:32px 52px;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;
+}
+.footer-copy{font-size:12px;color:var(--dim)}
+
+/* ── REVEAL ON SCROLL ── */
+.reveal{
+  opacity:0;transform:translateY(32px) scale(.96);
+  transition:opacity .7s cubic-bezier(.16,1,.3,1),transform .7s cubic-bezier(.16,1,.3,1);
+}
+.reveal.in-view{opacity:1;transform:translateY(0) scale(1)}
+
+/* ── MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:2000;
+  display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(20px)}
+.modal-bg.open{display:flex}
+.modal-card{background:#09090f;border:1px solid rgba(255,255,255,.1);border-radius:22px;
+  padding:32px;width:100%;max-width:380px;box-shadow:0 48px 120px rgba(0,0,0,.85)}
+.modal-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.modal-title{font-size:17px;font-weight:800;letter-spacing:-.4px}
+.modal-x{background:none;border:none;cursor:pointer;font-size:18px;color:var(--dim);line-height:1}
+.modal-x:hover{color:var(--text)}
+.g-btn{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.04);color:var(--text);font-family:'Inter',sans-serif;
+  font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;gap:9px;margin-bottom:16px;transition:all .15s}
+.g-btn:hover{border-color:rgba(255,255,255,.28);background:rgba(255,255,255,.07)}
+.m-div{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.m-div-line{flex:1;height:1px;background:var(--border)}
+.m-div-txt{font-size:9px;font-weight:700;color:var(--dim);text-transform:uppercase;
+  letter-spacing:.1em;font-family:'JetBrains Mono',monospace}
+.m-field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.m-field label{font-size:8px;font-weight:700;color:var(--dim);text-transform:uppercase;
+  letter-spacing:.18em;font-family:'JetBrains Mono',monospace}
+.m-field input{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);
+  border-radius:8px;padding:10px 13px;font-size:13px;color:var(--text);outline:none;
+  font-family:'Inter',sans-serif;width:100%;transition:border-color .15s}
+.m-field input:focus{border-color:var(--neon)}
+.m-submit{width:100%;padding:12px;background:var(--neon);color:#04040a;border:none;
+  border-radius:9px;font-size:13px;font-weight:800;cursor:pointer;margin-top:6px;
+  font-family:'Inter',sans-serif;transition:background .15s}
+.m-submit:hover{background:#00e88c}
+.m-submit:disabled,.g-btn:disabled{opacity:.6;cursor:not-allowed}
+.m-error{font-size:11px;color:#ff6b6b;background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.25);
+  border-radius:8px;padding:9px 12px;margin-bottom:12px;line-height:1.5}
+.m-note{font-size:11px;color:var(--dim);text-align:center;margin-top:12px;font-family:'JetBrains Mono',monospace}
+.m-sw{color:var(--neon);cursor:pointer;text-decoration:underline}
+
+/* ── HEATMAP FIELD — hero mockup grid ── */
+.hm-field{display:grid;gap:3px;width:100%}
+.hm-field-cell{position:relative;aspect-ratio:1;border-radius:2px;overflow:hidden}
+.hm-field-base{position:absolute;inset:0;background:rgba(255,255,255,.05);border-radius:2px;animation:hmShimmer 3.2s ease-in-out infinite}
+.hm-field-fill{position:absolute;inset:0;border-radius:2px}
+@keyframes hmShimmer{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* ── RESPONSIVE ── */
+@media (max-width:1050px){
+  .hero{grid-template-columns:1fr;justify-items:center;text-align:center}
+  .hero-copy-center{text-align:center;max-width:640px}
+  .hero-copy-center .hero-sub{max-width:520px;margin-left:auto;margin-right:auto}
+  .hero-copy-center .hero-actions{justify-content:center}
+  .hero-visual-full{max-width:720px}
+}
+@media (max-width:920px){
+  .hero-visual-full{overflow-x:auto;padding-bottom:6px}
+  .mac-window{min-width:760px}
+}
+@media (max-width:900px){
+  .hero{padding:56px 20px 64px;gap:36px}
+  .features{padding:64px 24px}
+  .lp-nav{padding:14px 24px}
+  .lp-footer{padding:28px 24px;justify-content:center;text-align:center}
+}
